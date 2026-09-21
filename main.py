@@ -9,16 +9,38 @@ from rail_fence import(
 st.title("Aplikasi Enkripsi dan Dekripsi Kriptografi")
 
 
-menu = st.radio(
-    "Pilih Algoritma",
-    [
-        "1. Caesar Cipher",
-        "2. Rail Fence Cipher",
-        "3. AES",
-        "4. RSA",
-        "5. Super Encryption"
-    ]
-)
+# =========================
+# NAVIGATION
+# =========================
+
+if "menu" not in st.session_state:
+    st.session_state.menu = "Caesar Cipher"
+
+
+col1, col2, col3, col4, col5 = st.columns(5)
+
+with col1:
+    if st.button("Caesar", use_container_width=True):
+        st.session_state.menu = "Caesar Cipher"
+
+with col2:
+    if st.button("Rail Fence", use_container_width=True):
+        st.session_state.menu = "Rail Fence Cipher"
+
+with col3:
+    if st.button("AES", use_container_width=True):
+        st.session_state.menu = "AES"
+
+with col4:
+    if st.button("RSA", use_container_width=True):
+        st.session_state.menu = "RSA"
+
+with col5:
+    if st.button("Super Encryption", use_container_width=True):
+        st.session_state.menu = "Super Encryption"
+
+
+menu = st.session_state.menu
 
 # menu = st.sidebar.radio(
 #     "Pilih Algoritma",
@@ -31,9 +53,9 @@ menu = st.radio(
 #     ]
 # )
 
-if menu == "2. Rail Fence Cipher":
+if menu == "Rail Fence Cipher":
 
-    st.header("2. Rail Fence Cipher")
+    st.header("Rail Fence Cipher")
 
     st.write(
         "Rail Fence Cipher merupakan algoritma transposisi klasik "
