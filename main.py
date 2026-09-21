@@ -6,6 +6,13 @@ from rail_fence import(
     railFenceNotes,
 )
 
+from caesar import (
+    caesar_encrypt,
+    caesar_decrypt,
+    caesar_encrypt_process,
+    caesar_decrypt_process,
+)
+
 st.title("Aplikasi Enkripsi dan Dekripsi Kriptografi")
 
 
@@ -103,3 +110,66 @@ if menu == "Rail Fence Cipher":
     with st.expander("📖 Lihat Proses Algoritma"):
 
         st.markdown(railFenceNotes)
+
+elif menu == "Caesar Cipher":
+    
+    st.header("Caesar Cipher")
+
+    st.write(
+        "Caesar Cipher adalah algoritma kriptografi klasik "
+        "yang menggantikan setiap huruf dalam plaintext "
+        "dengan huruf lain yang berada pada posisi tertentu "
+        "di alfabet."
+    )
+
+    text = st.text_area(
+        "Masukkan teks",
+        placeholder="Contoh: INFORMATIKA UPN"
+    )
+
+    key = st.number_input(
+        "Kunci (Key)",
+        min_value=1,
+        max_value=25,
+        value=3
+    )
+
+    col1, col2 = st.columns(2)
+
+    with col1:
+
+        if st.button("🔒 Enkripsi", use_container_width=True):
+
+            if text:
+
+                result, process = caesar_encrypt_process(text, key)
+
+                st.success("Enkripsi berhasil!")
+                st.code(result)
+
+                with st.expander("📖 Lihat Proses Algoritma"):
+                    for step in process:
+                        st.write(
+                            f"Input: {step['input']} | "
+                            f"Output: {step['output']} | "
+                            f"Operasi: {step['operation']}"
+                        )
+
+    with col2:
+
+        if st.button("🔓 Dekripsi", use_container_width=True):
+
+            if text:
+
+                result, process = caesar_decrypt_process(text, key)
+
+                st.success("Dekripsi berhasil!")
+                st.code(result)
+
+                with st.expander("📖 Lihat Proses Algoritma"):
+                    for step in process:
+                        st.write(
+                            f"Input: {step['input']} | "
+                            f"Output: {step['output']} | "
+                            f"Operasi: {step['operation']}"
+                        )
