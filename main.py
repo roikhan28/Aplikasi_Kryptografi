@@ -3,7 +3,7 @@ import streamlit as st
 from rail_fence import(
     railFenceEncrypt,
     railFenceDecrypt,
-    railFenceProcess,
+    railFenceNotes,
 )
 
 st.title("Aplikasi Enkripsi dan Dekripsi Kriptografi")
@@ -64,7 +64,7 @@ if menu == "Rail Fence Cipher":
 
     text = st.text_area(
         "Masukkan teks",
-        placeholder="Contoh: WE ARE DISCOVERED"
+        placeholder="Contoh: INFORMATIKA UPN"
     )
 
     rails = st.number_input(
@@ -102,32 +102,4 @@ if menu == "Rail Fence Cipher":
 
     with st.expander("📖 Lihat Proses Algoritma"):
 
-        st.markdown("""
-        **Proses Enkripsi:**
-
-        1. Plaintext ditulis secara zig-zag.
-        2. Penulisan dilakukan pada sejumlah rail.
-        3. Setelah mencapai rail terakhir, arah berubah.
-        4. Ciphertext dibentuk dengan membaca setiap rail dari atas ke bawah.
-
-        **Contoh dengan 3 rail:**
-
-        ```text
-        WEAREDISCOVERED
-        ```
-
-        Disusun menjadi pola zig-zag:
-
-        ```text
-        W   E   D   C   V   R   D
-         E R D S O E E
-          A   I   C   O
-        ```
-
-        Kemudian karakter dibaca per rail untuk menghasilkan ciphertext.
-
-        **Dekripsi:**
-
-        Ciphertext disusun kembali berdasarkan pola zig-zag,
-        kemudian dibaca mengikuti pola tersebut untuk mendapatkan plaintext.
-        """)
+        st.markdown(railFenceNotes)

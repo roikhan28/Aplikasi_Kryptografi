@@ -76,3 +76,34 @@ def railFenceProcess(text, rails, decrypt=False):
         f"Rail {i + 1}: {' '.join(row)}"
         for i, row in enumerate(rows)
     )
+
+railFenceNotes = """
+        **Proses Enkripsi:**
+
+        1. Plaintext ditulis secara zig-zag.
+        2. Penulisan dilakukan pada sejumlah rail.
+        3. Setelah mencapai rail terakhir, arah berubah.
+        4. Ciphertext dibentuk dengan membaca setiap rail dari atas ke bawah.
+
+        **Contoh dengan 3 rail:**
+
+        ```text
+        INFORMATIKA UPN
+        ```
+
+        Disusun menjadi pola zig-zag:
+
+        ```text
+        I       R       I       U 
+          N   O   M   T   K       P
+            F       A       A       N
+        ```
+
+        Kemudian karakter dibaca per rail untuk menghasilkan ciphertext.
+
+        **Dekripsi:**
+
+        Ciphertext disusun kembali berdasarkan pola zig-zag,
+        kemudian dibaca mengikuti pola tersebut untuk mendapatkan plaintext.
+        """
+    
