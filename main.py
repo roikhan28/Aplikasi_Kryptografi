@@ -21,9 +21,13 @@ from block import (
     aesNotes
 )
 
-
-
-
+from stream import (
+    encrypt,
+    decrypt,
+    process_encryption,
+    process_decryption,
+    streamCipherNotes
+)
 
 st.title("Aplikasi Enkripsi dan Dekripsi Kriptografi")
 
@@ -51,8 +55,8 @@ with col3:
         st.session_state.menu = "AES"
 
 with col4:
-    if st.button("RSA", use_container_width=True):
-        st.session_state.menu = "RSA"
+    if st.button("Stream", use_container_width=True):
+        st.session_state.menu = "Stream"
 
 with col5:
     if st.button("Super Encryption", use_container_width=True):
@@ -409,3 +413,126 @@ elif menu == "AES":
     ):
 
         st.markdown(aesNotes)
+
+
+# STREAMMMM
+
+elif menu == "Stream":
+
+    st.header("Stream Cipher")
+
+    st.write(
+        "Stream Cipher merupakan metode kriptografi yang mengenkripsi "
+        "data secara bit demi bit menggunakan keystream. Pada aplikasi "
+        "ini, keystream dihasilkan menggunakan LFSR (Linear Feedback "
+        "Shift Register) dengan seed 4-bit."
+    )
+
+    st.divider()
+
+    # =========================
+    # ENKRIPSI
+    # =========================
+
+    st.subheader("🔐 Enkripsi")
+
+    plaintext = st.text_area(
+        "Masukkan teks",
+        placeholder="Contoh: INFORMATIKA UPN"
+    )
+
+    seed = st.text_input(
+        "Seed LFSR",
+        placeholder="Contoh: 1011",
+        max_chars=4
+    )
+
+    if st.button("Enkripsi", use_container_width=True):
+
+        if not plaintext:
+            st.warning("Masukkan teks terlebih dahulu.")
+
+        elif not seed:
+            st.warning("Masukkan seed LFSR terlebih dahulu.")
+
+        elif len(seed) != 4 or any(bit not in "01" for bit in seed):
+            st.warning("Seed harus terdiri dari 4 bit, contoh: 1011.")
+
+        else:
+            try:
+                result = process_encryption(
+                    plaintext,
+                    seed
+                )
+
+                st.success("Enkripsi berhasil!")
+
+                st.write("### Proses Enkripsi")
+
+                for step in result:
+                    st.write(
+                        f"**Tahap {step['Tahap']} — {step['Proses']}**"
+                    )
+                    st.code(step["Hasil"])
+
+            except Exception as e:
+                st.error(f"Terjadi kesalahan: {e}")
+
+    st.divider()
+
+    # =========================
+    # DEKRIPSI
+    # =========================
+
+    st.subheader("🔓 Dekripsi")
+
+    ciphertext_hex = st.text_area(
+        "Masukkan Ciphertext HEX",
+        placeholder="Contoh: 4f2a8b..."
+    )
+
+    decrypt_seed = st.text_input(
+        "Seed LFSR",
+        placeholder="Masukkan seed yang sama",
+        max_chars=4,
+        key="decrypt_seed"
+    )
+
+    if st.button("Dekripsi", use_container_width=True):
+
+        if not ciphertext_hex:
+            st.warning("Masukkan ciphertext HEX terlebih dahulu.")
+
+        elif not decrypt_seed:
+            st.warning("Masukkan seed LFSR terlebih dahulu.")
+
+        elif (
+            len(decrypt_seed) != 4
+            or any(bit not in "01" for bit in decrypt_seed)
+        ):
+            st.warning("Seed harus terdiri dari 4 bit, contoh: 1011.")
+
+        else:
+
+            try:
+
+                result = process_decryption(
+                    ciphertext_hex,
+                    decrypt_seed
+                )
+
+                st.success("Dekripsi berhasil!")
+
+                for step in result:
+                    st.write(
+                        f"**Tahap {step['Tahap']} — {step['Proses']}**"
+                    )
+                    st.code(step["Hasil"])
+
+            except Exception as e:
+                st.error(f"Dekripsi gagal: {e}")
+
+    st.divider()
+
+    with st.expander("📖 Lihat Proses Algoritma"):
+        st.markdown(streamCipherNotes)

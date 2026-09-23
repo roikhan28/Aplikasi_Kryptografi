@@ -7,7 +7,7 @@ def text_to_binary(text):
     binary = ""
 
     for char in text:
-        binary += format(ord(char), "0bb")
+        binary += format(ord(char), "08b")
 
     return binary
 def binary_to_text(binary):
@@ -47,7 +47,7 @@ def lsfr_generate(seed, length):
         )
     if seed == "0000":
         raise ValueError(
-            "seed 0000 tidak di[erbolehkan"
+            "seed 0000 tidak diperbolehkan"
         )
 
     register = list(seed)
@@ -118,32 +118,37 @@ def binary_to_hex(binary):
 
 #HEX ke BINARY
 def hex_to_binary(hex_text):
-    "Mengubah hexadecimal menjadi binary"
 
-    hex_text = hex_text.sttip()
+    hex_text = hex_text.strip()
+
+
+    if not hex_text:
+        raise ValueError(
+            "Ciphertext HEX kosong."
+        )
 
     if len(hex_text) % 2 != 0:
         raise ValueError(
-             "Ciphertext HEX harus memiliki jumlah digit genap."
+            "Ciphertext HEX harus memiliki jumlah digit genap."
         )
+
     binary = ""
 
     for i in range(0, len(hex_text), 2):
 
-        byte_hex = hex_text[i:1 + 2]
+        byte_hex = hex_text[i:i + 2]
+
+        print("DEBUG BYTE:", repr(byte_hex))
 
         try:
-            value = int(byte_hex, 15)
+            value = int(byte_hex, 16)
 
-        except:
+        except ValueError:
             raise ValueError(
-                 "Ciphertext mengandung karakter HEX yang tidak valid."
+                f"Ciphertext mengandung karakter HEX yang tidak valid: {repr(byte_hex)}"
             )
 
-        binary += format(
-            value,
-            "08b"
-        )
+        binary += format(value, "08b")
 
     return binary
 
@@ -152,31 +157,29 @@ def hex_to_binary(hex_text):
 #enkripsi
 
 def encrypt(text, seed):
-    #plaintetxt > binary
-    plaintext_binary = text_to_binary
+
+    plaintext_binary = text_to_binary(text)
 
     keystream = lsfr_generate(
         seed,
         len(plaintext_binary)
     )
 
-    #XOR plaintetxt dengan keystream
-    chipertext_binary = xor_binary(
+    ciphertext_binary = xor_binary(
         plaintext_binary,
         keystream
     )
 
-    #binary > hex
-    chipertext_hex = binary_to_hex(
-        chipertext_binary
+    ciphertext_hex = binary_to_hex(
+        ciphertext_binary
     )
 
     return {
         "plaintext": text,
         "plaintext_binary": plaintext_binary,
         "keystream": keystream,
-        "ciphertext_binary": chipertext_binary,
-        "ciphertext_hex": chipertext_hex
+        "ciphertext_binary": ciphertext_binary,
+        "ciphertext_hex": ciphertext_hex
     }
 
 #dekripsi
@@ -283,3 +286,95 @@ def process_decryption(ciphertext_hex, seed):
             "Hasil": result["plaintext"]
         }
     ]
+
+streamCipherNotes = """
+            ### 🔐 Proses Enkripsi Stream Cipher
+
+            **1. Konversi Plaintext ke Binary**
+
+            Setiap karakter pada plaintext dikonversi menjadi representasi
+            binary 8-bit.
+
+            **2. Generate Keystream**
+
+            Seed 4-bit digunakan sebagai nilai awal LFSR (Linear Feedback
+            Shift Register). LFSR menghasilkan rangkaian bit yang disebut
+            keystream.
+
+            **3. Operasi XOR**
+
+            Plaintext binary di-XOR dengan keystream yang dihasilkan oleh LFSR.
+
+            **4. Menghasilkan Ciphertext Binary**
+
+            Hasil operasi XOR berupa ciphertext dalam bentuk binary.
+
+            **5. Konversi Binary ke HEX**
+
+            Ciphertext binary dikonversi menjadi hexadecimal agar lebih mudah
+            ditampilkan dan digunakan sebagai ciphertext.
+
+            ---
+
+            ### 🔓 Proses Dekripsi
+
+            **1. Konversi Ciphertext HEX ke Binary**
+
+            Ciphertext hexadecimal dikonversi kembali menjadi binary.
+
+            **2. Generate Keystream**
+
+            Seed yang sama digunakan untuk menghasilkan keystream yang sama
+            menggunakan LFSR.
+
+            **3. Operasi XOR**
+
+            Ciphertext binary di-XOR dengan keystream.
+
+            **4. Menghasilkan Plaintext Binary**
+
+            Hasil XOR menghasilkan kembali binary dari plaintext asli.
+
+            **5. Konversi Binary ke Teks**
+
+            Plaintext binary dikonversi kembali menjadi karakter sehingga
+            menghasilkan plaintext asli.
+
+            ---
+
+            ### Alur Enkripsi
+
+            Plaintext
+            ↓
+            Binary
+            ↓
+            LFSR + Seed
+            ↓
+            Keystream
+            ↓
+            XOR
+            ↓
+            Ciphertext Binary
+            ↓
+            HEX
+            ↓
+            Ciphertext HEX
+
+            ### Alur Dekripsi
+
+            Ciphertext HEX
+            ↓
+            Binary
+            ↓
+            LFSR + Seed
+            ↓
+            Keystream
+            ↓
+            XOR
+            ↓
+            Plaintext Binary
+            ↓
+            Text
+            ↓
+            Plaintext
+            """
