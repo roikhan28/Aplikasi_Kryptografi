@@ -29,6 +29,18 @@ from stream import (
     streamCipherNotes
 )
 
+from block import (
+    generate_key,
+    aesencrypt,
+    aesdecrypt,
+    aesNotes
+)
+
+from super_encryption import (
+    super_encrypt,
+    super_decrypt
+)
+
 st.title("Aplikasi Enkripsi dan Dekripsi Kriptografi")
 
 
@@ -536,3 +548,508 @@ elif menu == "Stream":
 
     with st.expander("📖 Lihat Proses Algoritma"):
         st.markdown(streamCipherNotes)
+
+
+# =========================
+# SUPER ENCRYPTION
+# =========================
+
+elif menu == "Super Encryption":
+
+    st.header("Super Encryption")
+
+    st.write(
+        "Super Encryption menggabungkan beberapa algoritma kriptografi "
+        "dengan urutan yang dapat ditentukan oleh pengguna."
+    )
+
+    st.divider()
+
+    # =========================
+    # SESSION STATE
+    # =========================
+
+    if "super_algorithms" not in st.session_state:
+        st.session_state.super_algorithms = [
+            "Caesar",
+            "Rail Fence",
+            "Stream",
+            "AES"
+        ]
+
+    if "super_ciphertext" not in st.session_state:
+        st.session_state.super_ciphertext = ""
+
+    if "super_process" not in st.session_state:
+        st.session_state.super_process = []
+
+    if "super_aes_key" not in st.session_state:
+        st.session_state.super_aes_key = None
+
+    if "super_aes_nonce" not in st.session_state:
+        st.session_state.super_aes_nonce = None
+
+    if "super_aes_tag" not in st.session_state:
+        st.session_state.super_aes_tag = None
+
+    # =========================
+    # PILIH ALGORITMA
+    # =========================
+
+    st.subheader("1. Pilih Algoritma")
+
+    selected_algorithms = st.multiselect(
+        "Pilih algoritma:",
+        ["Caesar", "Rail Fence", "Stream", "AES"],
+        default=st.session_state.super_algorithms
+    )
+
+    if len(selected_algorithms) < 2:
+
+        st.warning(
+            "Pilih minimal 2 algoritma."
+        )
+
+    elif len(selected_algorithms) > 4:
+
+        st.warning(
+            "Maksimal 4 algoritma."
+        )
+
+    # Sinkronisasi algoritma yang dipilih
+    current_order = [
+        alg
+        for alg in st.session_state.super_algorithms
+        if alg in selected_algorithms
+    ]
+
+    for alg in selected_algorithms:
+
+        if alg not in current_order:
+            current_order.append(alg)
+
+    st.session_state.super_algorithms = current_order
+
+    # =========================
+    # URUTAN ALGORITMA
+    # =========================
+
+    st.subheader("2. Urutan Algoritma")
+
+    if selected_algorithms:
+
+        st.write("Urutan proses enkripsi:")
+
+        for i, algorithm in enumerate(
+            st.session_state.super_algorithms
+        ):
+
+            col1, col2, col3 = st.columns(
+                [5, 1, 1]
+            )
+
+            with col1:
+
+                st.write(
+                    f"**{i + 1}. {algorithm}**"
+                )
+
+            with col2:
+
+                if st.button(
+                    "⬆️",
+                    key=f"super_up_{algorithm}"
+                ):
+
+                    if i > 0:
+
+                        algorithms = (
+                            st.session_state.super_algorithms
+                        )
+
+                        algorithms[i], algorithms[i - 1] = (
+                            algorithms[i - 1],
+                            algorithms[i]
+                        )
+
+                        st.session_state.super_algorithms = (
+                            algorithms
+                        )
+
+                        st.rerun()
+
+            with col3:
+
+                if st.button(
+                    "⬇️",
+                    key=f"super_down_{algorithm}"
+                ):
+
+                    algorithms = (
+                        st.session_state.super_algorithms
+                    )
+
+                    if i < len(algorithms) - 1:
+
+                        algorithms[i], algorithms[i + 1] = (
+                            algorithms[i + 1],
+                            algorithms[i]
+                        )
+
+                        st.session_state.super_algorithms = (
+                            algorithms
+                        )
+
+                        st.rerun()
+
+    st.divider()
+
+    # =========================
+    # PARAMETER
+    # =========================
+
+    st.subheader("3. Parameter Algoritma")
+
+    caesar_key = 3
+    rail_count = 3
+    stream_seed = "1011"
+
+    # Caesar
+    if "Caesar" in st.session_state.super_algorithms:
+
+        caesar_key = st.number_input(
+            "Caesar Key",
+            min_value=1,
+            max_value=25,
+            value=3,
+            key="super_caesar_key"
+        )
+
+    # Rail Fence
+    if "Rail Fence" in st.session_state.super_algorithms:
+
+        rail_count = st.number_input(
+            "Jumlah Rail",
+            min_value=2,
+            max_value=20,
+            value=3,
+            key="super_rail_count"
+        )
+
+    # Stream
+    if "Stream" in st.session_state.super_algorithms:
+
+        stream_seed = st.text_input(
+            "Seed LFSR",
+            value="1011",
+            max_chars=4,
+            key="super_stream_seed"
+        )
+
+        if (
+            len(stream_seed) != 4
+            or any(bit not in "01" for bit in stream_seed)
+        ):
+
+            st.warning(
+                "Seed harus terdiri dari 4 bit, contoh: 1011."
+            )
+
+    # AES
+    if "AES" in st.session_state.super_algorithms:
+
+        st.write(
+            "AES menggunakan AES-256-GCM."
+        )
+
+        if st.session_state.super_aes_key is not None:
+
+            st.write("AES Key:")
+
+            st.code(
+                base64.b64encode(
+                    st.session_state.super_aes_key
+                ).decode("utf-8")
+            )
+
+    st.divider()
+
+    # =========================
+    # ENKRIPSI
+    # =========================
+
+    st.subheader("🔐 Enkripsi")
+
+    super_plaintext = st.text_area(
+        "Masukkan plaintext",
+        placeholder="Contoh: INFORMATIKA UPN",
+        key="super_plaintext"
+    )
+
+    if st.button(
+        "🔒 Enkripsi Super",
+        use_container_width=True
+    ):
+
+        algorithms = (
+            st.session_state.super_algorithms
+        )
+
+        if len(algorithms) < 2:
+
+            st.warning(
+                "Pilih minimal 2 algoritma."
+            )
+
+        elif not super_plaintext:
+
+            st.warning(
+                "Masukkan plaintext terlebih dahulu."
+            )
+
+        elif (
+            "Stream" in algorithms
+            and (
+                len(stream_seed) != 4
+                or any(bit not in "01" for bit in stream_seed)
+            )
+        ):
+
+            st.warning(
+                "Seed LFSR harus terdiri dari 4 bit."
+            )
+
+        else:
+
+            try:
+
+                (
+                    ciphertext,
+                    process,
+                    aes_key,
+                    aes_nonce,
+                    aes_tag
+                ) = super_encrypt(
+                    super_plaintext,
+                    algorithms,
+                    caesar_key=caesar_key,
+                    rail_count=rail_count,
+                    stream_seed=stream_seed
+                )
+
+                st.session_state.super_ciphertext = (
+                    ciphertext
+                )
+
+                st.session_state.super_process = (
+                    process
+                )
+
+                st.session_state.super_aes_key = (
+                    aes_key
+                )
+
+                st.session_state.super_aes_nonce = (
+                    aes_nonce
+                )
+
+                st.session_state.super_aes_tag = (
+                    aes_tag
+                )
+
+                st.success(
+                    "Super Encryption berhasil!"
+                )
+
+            except Exception as e:
+
+                st.error(
+                    f"Enkripsi gagal: {e}"
+                )
+
+    # =========================
+    # HASIL ENKRIPSI
+    # =========================
+
+    if st.session_state.super_ciphertext:
+
+        st.subheader(
+            "Hasil Super Encryption"
+        )
+
+        st.code(
+            st.session_state.super_ciphertext
+        )
+
+        st.write(
+            "Urutan algoritma:"
+        )
+
+        st.write(
+            " → ".join(
+                st.session_state.super_algorithms
+            )
+        )
+
+        # Informasi AES
+        if "AES" in st.session_state.super_algorithms:
+
+            st.write("AES Nonce:")
+
+            st.code(
+                st.session_state.super_aes_nonce
+            )
+
+            st.write(
+                "AES Authentication Tag:"
+            )
+
+            st.code(
+                st.session_state.super_aes_tag
+            )
+
+        # Proses algoritma
+        with st.expander(
+            "📖 Lihat Proses Super Encryption"
+        ):
+
+            for i, step in enumerate(
+                st.session_state.super_process
+            ):
+
+                st.write(
+                    f"**Tahap {i}: "
+                    f"{step['algorithm']}**"
+                )
+
+                st.code(
+                    str(step["result"])
+                )
+
+    st.divider()
+
+    # =========================
+    # DEKRIPSI
+    # =========================
+
+    st.subheader("🔓 Dekripsi")
+
+    super_ciphertext_input = st.text_area(
+        "Masukkan ciphertext",
+        placeholder=(
+            "Masukkan ciphertext hasil "
+            "Super Encryption"
+        ),
+        key="super_ciphertext_input"
+    )
+
+    if "AES" in st.session_state.super_algorithms:
+
+        st.info(
+            "Untuk dekripsi AES, gunakan AES Key, "
+            "Nonce, dan Authentication Tag "
+            "yang diperoleh saat enkripsi."
+        )
+
+    if st.button(
+        "🔓 Dekripsi Super",
+        use_container_width=True
+    ):
+
+        algorithms = (
+            st.session_state.super_algorithms
+        )
+
+        if len(algorithms) < 2:
+
+            st.warning(
+                "Pilih minimal 2 algoritma."
+            )
+
+        elif not super_ciphertext_input:
+
+            st.warning(
+                "Masukkan ciphertext terlebih dahulu."
+            )
+
+        elif (
+            "Stream" in algorithms
+            and (
+                len(stream_seed) != 4
+                or any(bit not in "01" for bit in stream_seed)
+            )
+        ):
+
+            st.warning(
+                "Seed LFSR harus terdiri dari 4 bit."
+            )
+
+        elif (
+            "AES" in algorithms
+            and (
+                st.session_state.super_aes_key is None
+                or st.session_state.super_aes_nonce is None
+                or st.session_state.super_aes_tag is None
+            )
+        ):
+
+            st.warning(
+                "Data AES untuk dekripsi belum tersedia. "
+                "Lakukan enkripsi terlebih dahulu."
+            )
+
+        else:
+
+            try:
+
+                plaintext, decrypt_process = (
+                    super_decrypt(
+                        super_ciphertext_input,
+                        algorithms,
+                        caesar_key=caesar_key,
+                        rail_count=rail_count,
+                        stream_seed=stream_seed,
+                        aes_key=(
+                            st.session_state.super_aes_key
+                        ),
+                        aes_nonce=(
+                            st.session_state.super_aes_nonce
+                        ),
+                        aes_tag=(
+                            st.session_state.super_aes_tag
+                        )
+                    )
+                )
+
+                st.success(
+                    "Super Decryption berhasil!"
+                )
+
+                st.write("Plaintext:")
+
+                st.code(
+                    plaintext
+                )
+
+                with st.expander(
+                    "📖 Lihat Proses Super Decryption"
+                ):
+
+                    for i, step in enumerate(
+                        decrypt_process
+                    ):
+
+                        st.write(
+                            f"**Tahap {i}: "
+                            f"{step['algorithm']}**"
+                        )
+
+                        st.code(
+                            str(step["result"])
+                        )
+
+            except Exception as e:
+
+                st.error(
+                    f"Dekripsi gagal: {e}"
+                )
